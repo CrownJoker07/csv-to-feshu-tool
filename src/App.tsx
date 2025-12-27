@@ -237,7 +237,19 @@ export default function App() {
           return (
             <div className="card" key={item.id}>
               <div className="cardTop">
-                <div className="cardTitle">{item.file.name}</div>
+                <div className="cardTopRow">
+                  <div className="cardTitle">{item.file.name}</div>
+
+                  {!item.error ? (
+                    <button
+                      className="btn primary"
+                      onClick={() => onCopy(item.id)}
+                    >
+                      {copiedRecently ? '已复制' : '复制TSV'}
+                    </button>
+                  ) : null}
+                </div>
+
                 <div className="cardMeta">
                   {formatBytes(item.file.size)} · 原始 {item.originalRowCount} 行 ·
                   删除 {item.removedRowCount} 行 · 保留 {rowCount} 行 · {colCount}{' '}
@@ -247,16 +259,7 @@ export default function App() {
 
               {item.error ? (
                 <div className="error">解析失败：{item.error}</div>
-              ) : (
-                <div className="cardActions">
-                  <button
-                    className="btn primary"
-                    onClick={() => onCopy(item.id)}
-                  >
-                    {copiedRecently ? '已复制' : '复制TSV'}
-                  </button>
-                </div>
-              )}
+              ) : null}
 
               {!item.error && rowCount > 0 ? (
                 <pre className="preview">
