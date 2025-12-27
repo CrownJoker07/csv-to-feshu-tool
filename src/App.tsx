@@ -16,6 +16,7 @@ type ParsedItem = {
   removedRows: string[][]
   removedByTimeCount: number
   removedByCustomCount: number
+  removedEmptyCount: number
   originalRowCount: number
   removedRowCount: number
   error?: string
@@ -133,6 +134,7 @@ export default function App() {
                 removedRows: cleaned.removedRows,
                 removedByTimeCount: cleaned.removedByTimeRows.length,
                 removedByCustomCount: cleaned.removedByCustomRows.length,
+                removedEmptyCount: cleaned.removedEmptyCount,
                 originalRowCount: cleaned.originalRowCount,
                 removedRowCount: cleaned.removedRowCount,
               } satisfies ParsedItem
@@ -146,6 +148,7 @@ export default function App() {
                 removedRows: [],
                 removedByTimeCount: 0,
                 removedByCustomCount: 0,
+                removedEmptyCount: 0,
                 originalRowCount: 0,
                 removedRowCount: 0,
                 error: msg,
@@ -186,6 +189,7 @@ export default function App() {
           removedRows: cleaned.removedRows,
           removedByTimeCount: cleaned.removedByTimeRows.length,
           removedByCustomCount: cleaned.removedByCustomRows.length,
+          removedEmptyCount: cleaned.removedEmptyCount,
           originalRowCount: cleaned.originalRowCount,
           removedRowCount: cleaned.removedRowCount,
         }
@@ -420,8 +424,11 @@ export default function App() {
 
                 <div className="cardMeta">
                   {formatBytes(item.file.size)} · 原始 {item.originalRowCount} 行 ·
-                  删除 {item.removedRowCount} 行 · 保留 {rowCount} 行 · {colCount}{' '}
-                  列
+                  删除 {item.removedRowCount} 行
+                  {item.removedEmptyCount > 0
+                    ? `（空行 ${item.removedEmptyCount} 行未展示）`
+                    : ''}{' '}
+                  · 保留 {rowCount} 行 · {colCount} 列
                   {timeFilterEnabled && item.removedByTimeCount > 0
                     ? ` · 时间筛选删除 ${item.removedByTimeCount} 行`
                     : ''}

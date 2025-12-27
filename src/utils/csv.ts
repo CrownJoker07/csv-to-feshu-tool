@@ -6,6 +6,7 @@ export type CsvCleanResult = {
   originalRowCount: number
   cleanedRowCount: number
   removedRowCount: number
+  removedEmptyCount: number
   rows: string[][]
   removedRows: string[][]
   removedByTimeRows: string[][]
@@ -282,11 +283,16 @@ export function cleanCsvRows(
     }
   }
   if (headerIndex === -1) {
+    // 所有都是空行/无数据
+    const removedEmptyCount = removeEmptyRows
+      ? rawRows.filter((r) => rowIsEmpty(r)).length
+      : 0
     return {
       headerIndex: -1,
       originalRowCount,
       cleanedRowCount: 0,
       removedRowCount: originalRowCount,
+      removedEmptyCount,
       rows: [],
       removedRows: [],
       removedByTimeRows: [],
@@ -300,9 +306,13 @@ export function cleanCsvRows(
 
   const cleanedBase: string[][] = []
   const removedByRulesRows: string[][] = []
+  let removedEmptyCount = 0
   for (let i = 0; i < rawRows.length; i += 1) {
     const row = rawRows[i]
-    if (removeEmptyRows && rowIsEmpty(row)) continue
+    if (removeEmptyRows && rowIsEmpty(row)) {
+      removedEmptyCount += 1
+      continue
+    }
 
     // 表头行：保留（即使它命中关键词）
     if (i === headerIndex) {
@@ -381,18 +391,20 @@ export function cleanCsvRows(
   }
 
   const cleanedRowCount = cleaned.length
-  const removedRowCount = Math.max(0, originalRowCount - cleanedRowCount)
   const removedRows = [
     ...removedByRulesRows,
     ...removedByCustomRows,
     ...removedByTimeRows,
   ]
+  // 用可解释的“删除来源”来算删除总行数，避免与展示的 removedRows 行数产生歧义
+  const removedRowCount = removedRows.length + removedEmptyCount
 
   return {
     headerIndex,
     originalRowCount,
     cleanedRowCount,
     removedRowCount,
+    removedEmptyCount,
     rows: cleaned,
     removedRows,
     removedByTimeRows,
