@@ -20,6 +20,9 @@ type ParsedItem = {
   removedRowCount: number
   error?: string
   copiedAt?: number
+  noticeText?: string
+  noticeKind?: 'success' | 'error'
+  noticeAt?: number
 }
 
 async function copyText(text: string): Promise<void> {
@@ -227,13 +230,52 @@ export default function App() {
       const tsv = rowsToTsv(item.cleanedRows)
       try {
         await copyText(tsv)
+        const noticeAt = Date.now()
         setItems((prev) =>
-          prev.map((x) => (x.id === id ? { ...x, copiedAt: Date.now() } : x)),
+          prev.map((x) =>
+            x.id === id
+              ? {
+                  ...x,
+                  copiedAt: noticeAt,
+                  noticeText: '已复制',
+                  noticeKind: 'success',
+                  noticeAt,
+                }
+              : x,
+          ),
         )
-        setGlobalMsg(`已复制：${item.file.name}`)
-        window.setTimeout(() => setGlobalMsg(null), 1200)
+        window.setTimeout(() => {
+          setItems((prev) =>
+            prev.map((x) =>
+              x.id === id && x.noticeAt === noticeAt
+                ? { ...x, noticeText: undefined, noticeKind: undefined, noticeAt: undefined }
+                : x,
+            ),
+          )
+        }, 1600)
       } catch {
-        setGlobalMsg('复制失败：请尝试使用 Chrome/Edge，或在 localhost 运行')
+        const noticeAt = Date.now()
+        setItems((prev) =>
+          prev.map((x) =>
+            x.id === id
+              ? {
+                  ...x,
+                  noticeText: '复制失败：请尝试使用 Chrome/Edge，或在 localhost 运行',
+                  noticeKind: 'error',
+                  noticeAt,
+                }
+              : x,
+          ),
+        )
+        window.setTimeout(() => {
+          setItems((prev) =>
+            prev.map((x) =>
+              x.id === id && x.noticeAt === noticeAt
+                ? { ...x, noticeText: undefined, noticeKind: undefined, noticeAt: undefined }
+                : x,
+            ),
+          )
+        }, 2200)
       }
     },
     [items],
@@ -355,6 +397,12 @@ export default function App() {
 
           return (
             <div className="card" key={item.id}>
+              {item.noticeText ? (
+                <div className={`cardToast ${item.noticeKind ?? ''}`}>
+                  {item.noticeText}
+                </div>
+              ) : null}
+
               <div className="cardTop">
                 <div className="cardTopRow">
                   <div className="cardTitle">{item.file.name}</div>

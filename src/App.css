@@ -160,6 +160,34 @@
   max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  position: relative;
+}
+
+.cardToast {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.2;
+  background: rgba(17, 17, 17, 0.92);
+  color: #fff;
+  max-width: min(520px, calc(100% - 24px));
+  box-sizing: border-box;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+.cardToast.success {
+  background: rgba(17, 17, 17, 0.92);
+}
+
+.cardToast.error {
+  background: rgba(180, 35, 24, 0.92);
 }
 
 .cardTop {
@@ -324,6 +352,21 @@
     border-color: rgba(251, 113, 133, 0.6);
     background: rgba(251, 113, 133, 0.12);
     color: #fecaca;
+  }
+
+  .cardToast {
+    background: rgba(249, 250, 251, 0.92);
+    color: #111;
+  }
+
+  .cardToast.success {
+    background: rgba(17, 17, 17, 0.92);
+    color: #fff;
+  }
+
+  .cardToast.error {
+    background: rgba(251, 113, 133, 0.92);
+    color: #111;
   }
 
   .filters {
