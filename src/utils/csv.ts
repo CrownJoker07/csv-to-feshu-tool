@@ -245,6 +245,8 @@ export function rowsToTsv(rows: string[][]): string {
 export function parseCsvFile(file: File): Promise<string[][]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
+      // 大文件解析放到 Worker，避免阻塞主线程（Chrome/Edge 支持）
+      worker: true,
       skipEmptyLines: false,
       complete: (results) => {
         const data = results.data as unknown[]

@@ -68,6 +68,9 @@ export default function App() {
   const [timeFilterStart, setTimeFilterStart] = useState('')
   const [timeFilterEnd, setTimeFilterEnd] = useState('')
   const [csvConfig, setCsvConfig] = useState<CsvConfig | null>(null)
+  const [openMap, setOpenMap] = useState<
+    Record<string, { cleanedOpen: boolean; removedOpen: boolean }>
+  >({})
 
   useEffect(() => {
     let cancelled = false
@@ -160,6 +163,20 @@ export default function App() {
         // 如果期间用户点了“清空列表”（或触发了新的解析批次），忽略本次结果
         if (mySeq === parseSeqRef.current) {
           setItems((prev) => [...prev, ...parsed])
+          // 默认折叠大内容，避免一次性渲染超大 TSV 导致卡顿
+          setOpenMap((prev) => {
+            const next = { ...prev }
+            for (const it of parsed) {
+              if (next[it.id]) continue
+              const cleanedDataRows = Math.max(0, it.cleanedRows.length - 1)
+              const removedRows = it.removedRows.length
+              next[it.id] = {
+                cleanedOpen: cleanedDataRows <= 200,
+                removedOpen: removedRows > 0 && removedRows <= 200,
+              }
+            }
+            return next
+          })
         }
       } finally {
         parsingCountRef.current = Math.max(0, parsingCountRef.current - 1)
@@ -303,6 +320,7 @@ export default function App() {
               // 让正在解析的批次结果失效（避免解析结束又把列表加回来）
               parseSeqRef.current += 1
               setItems([])
+              setOpenMap({})
               setGlobalMsg(null)
             }}
             disabled={items.length === 0}
@@ -400,6 +418,11 @@ export default function App() {
             ? Date.now() - item.copiedAt < 1200
             : false
 
+          const cleanedOpen = openMap[item.id]?.cleanedOpen ?? false
+          const removedOpen = openMap[item.id]?.removedOpen ?? false
+          const cleanedDataCount = Math.max(0, item.cleanedRows.length - 1)
+          const removedCount = item.removedRows.length
+
           return (
             <div className="card" key={item.id}>
               {item.noticeText ? (
@@ -450,9 +473,27 @@ export default function App() {
                       {rowsToTsv([item.cleanedRows[0]])}
                     </div>
                   ) : null}
-                  <pre className="preview">
-                    {rowsToTsv(item.cleanedRows.slice(1))}
-                  </pre>
+                  <button
+                    className="btn"
+                    onClick={() =>
+                      setOpenMap((prev) => ({
+                        ...prev,
+                        [item.id]: {
+                          cleanedOpen: !cleanedOpen,
+                          removedOpen: prev[item.id]?.removedOpen ?? false,
+                        },
+                      }))
+                    }
+                  >
+                    {cleanedOpen
+                      ? `收起剔除后内容（${cleanedDataCount} 行）`
+                      : `展开剔除后内容（${cleanedDataCount} 行）`}
+                  </button>
+                  {cleanedOpen ? (
+                    <pre className="preview">
+                      {rowsToTsv(item.cleanedRows.slice(1))}
+                    </pre>
+                  ) : null}
 
                   {item.removedRows.length > 0 ? (
                     <>
@@ -464,9 +505,27 @@ export default function App() {
                           {rowsToTsv([item.cleanedRows[0]])}
                         </div>
                       ) : null}
-                      <pre className="preview removedPreview">
-                        {rowsToTsv(item.removedRows)}
-                      </pre>
+                      <button
+                        className="btn"
+                        onClick={() =>
+                          setOpenMap((prev) => ({
+                            ...prev,
+                            [item.id]: {
+                              cleanedOpen: prev[item.id]?.cleanedOpen ?? false,
+                              removedOpen: !removedOpen,
+                            },
+                          }))
+                        }
+                      >
+                        {removedOpen
+                          ? `收起被删除内容（${removedCount} 行）`
+                          : `展开被删除内容（${removedCount} 行）`}
+                      </button>
+                      {removedOpen ? (
+                        <pre className="preview removedPreview">
+                          {rowsToTsv(item.removedRows)}
+                        </pre>
+                      ) : null}
                     </>
                   ) : null}
                 </>

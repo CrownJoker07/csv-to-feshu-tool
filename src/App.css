@@ -277,6 +277,10 @@
   color: #b42318;
 }
 
+.card .btn {
+  margin-top: 8px;
+}
+
 .tableHeader {
   margin-top: 8px;
   padding: 10px;
