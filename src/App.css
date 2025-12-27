@@ -37,6 +37,7 @@
   padding: 22px;
   cursor: pointer;
   background: #fafafa;
+  color: #111;
   user-select: none;
 }
 
@@ -47,12 +48,25 @@
 .dropTitle {
   font-size: 16px;
   font-weight: 600;
+  color: inherit;
 }
 
 .dropHint {
   margin-top: 6px;
-  color: #666;
+  color: rgba(17, 17, 17, 0.72);
   font-size: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .dropZone {
+    background: #111827;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+
+  .dropHint {
+    color: rgba(249, 250, 251, 0.72);
+  }
 }
 
 .toast {
@@ -78,6 +92,7 @@
   border-radius: 12px;
   padding: 14px;
   background: #fff;
+  color: #111;
 }
 
 .cardTop {
@@ -95,7 +110,7 @@
 }
 
 .cardMeta {
-  color: #666;
+  color: rgba(17, 17, 17, 0.72);
   font-size: 12px;
   flex-shrink: 0;
 }
@@ -110,6 +125,7 @@
 .btn {
   border: 1px solid #ddd;
   background: #fff;
+  color: #111;
   padding: 8px 12px;
   border-radius: 10px;
   cursor: pointer;
@@ -124,6 +140,16 @@
   border-color: #111;
   background: #111;
   color: #fff;
+}
+
+.btn.danger {
+  border-color: rgba(180, 35, 24, 0.45);
+  background: rgba(180, 35, 24, 0.08);
+  color: #b42318;
+}
+
+.btn.danger:hover {
+  background: rgba(180, 35, 24, 0.14);
 }
 
 .error {
@@ -141,4 +167,40 @@
   max-height: 180px;
   font-size: 12px;
   line-height: 1.35;
+}
+
+@media (prefers-color-scheme: dark) {
+  .card {
+    background: #111827;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+
+  .cardMeta {
+    color: rgba(249, 250, 251, 0.72);
+  }
+
+  .preview {
+    background: #0b1220;
+    border: 1px solid #1f2937;
+    color: #e5e7eb;
+  }
+
+  .btn {
+    background: #0b1220;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+
+  .btn.primary {
+    border-color: #f9fafb;
+    background: #f9fafb;
+    color: #111;
+  }
+
+  .btn.danger {
+    border-color: rgba(251, 113, 133, 0.6);
+    background: rgba(251, 113, 133, 0.12);
+    color: #fecaca;
+  }
 }

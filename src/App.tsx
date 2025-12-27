@@ -242,9 +242,6 @@ export default function App() {
                   >
                     {copiedRecently ? '已复制' : '复制TSV'}
                   </button>
-                  <button className="btn" onClick={() => onRemove(item.id)}>
-                    移除
-                  </button>
                 </div>
               )}
 
