@@ -263,8 +263,7 @@ export default function App() {
 
               {!item.error && rowCount > 0 ? (
                 <pre className="preview">
-                  {rowsToTsv(item.cleanedRows.slice(0, 8))}
-                  {rowCount > 8 ? '\n…（仅预览前 8 行）' : ''}
+                  {rowsToTsv(item.cleanedRows)}
                 </pre>
               ) : null}
             </div>
