@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
 import './App.css'
 import {
@@ -6,6 +6,7 @@ import {
   parseCsvFile,
   rowsToTsv,
 } from './utils/csv'
+import { fetchCsvConfig, type CsvConfig } from './utils/csvConfig'
 
 type ParsedItem = {
   id: string
@@ -14,6 +15,7 @@ type ParsedItem = {
   cleanedRows: string[][]
   removedRows: string[][]
   removedByTimeCount: number
+  removedByCustomCount: number
   originalRowCount: number
   removedRowCount: number
   error?: string
@@ -61,6 +63,19 @@ export default function App() {
   const [timeFilterEnabled, setTimeFilterEnabled] = useState(false)
   const [timeFilterStart, setTimeFilterStart] = useState('')
   const [timeFilterEnd, setTimeFilterEnd] = useState('')
+  const [csvConfig, setCsvConfig] = useState<CsvConfig | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchCsvConfig().then(({ config, error }) => {
+      if (cancelled) return
+      setCsvConfig(config)
+      if (error) setGlobalMsg(`csvConfig.json 加载失败，已使用默认配置：${error}`)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const stats = useMemo(() => {
     const ok = items.filter((x) => !x.error).length
@@ -105,6 +120,7 @@ export default function App() {
                   endDate: timeFilterEnd || undefined,
                   mode: 'includeMatch',
                 },
+                csvConfig: csvConfig ?? undefined,
               })
               return {
                 id,
@@ -113,6 +129,7 @@ export default function App() {
                 cleanedRows: cleaned.rows,
                 removedRows: cleaned.removedRows,
                 removedByTimeCount: cleaned.removedByTimeRows.length,
+                removedByCustomCount: cleaned.removedByCustomRows.length,
                 originalRowCount: cleaned.originalRowCount,
                 removedRowCount: cleaned.removedRowCount,
               } satisfies ParsedItem
@@ -125,6 +142,7 @@ export default function App() {
                 cleanedRows: [],
                 removedRows: [],
                 removedByTimeCount: 0,
+                removedByCustomCount: 0,
                 originalRowCount: 0,
                 removedRowCount: 0,
                 error: msg,
@@ -142,11 +160,11 @@ export default function App() {
         setIsParsing(parsingCountRef.current > 0)
       }
     },
-    [timeFilterEnabled, timeFilterEnd, timeFilterStart],
+    [csvConfig, timeFilterEnabled, timeFilterEnd, timeFilterStart],
   )
 
   // 时间筛选变化时：基于 rawRows 重新计算剔除结果（不需要重新解析文件）
-  const recomputeByTimeFilter = useCallback(() => {
+  const recomputeByFilters = useCallback(() => {
     setItems((prev) =>
       prev.map((it) => {
         if (it.error) return it
@@ -157,18 +175,26 @@ export default function App() {
             endDate: timeFilterEnd || undefined,
             mode: 'includeMatch',
           },
+          csvConfig: csvConfig ?? undefined,
         })
         return {
           ...it,
           cleanedRows: cleaned.rows,
           removedRows: cleaned.removedRows,
           removedByTimeCount: cleaned.removedByTimeRows.length,
+          removedByCustomCount: cleaned.removedByCustomRows.length,
           originalRowCount: cleaned.originalRowCount,
           removedRowCount: cleaned.removedRowCount,
         }
       }),
     )
-  }, [timeFilterEnabled, timeFilterEnd, timeFilterStart])
+  }, [csvConfig, timeFilterEnabled, timeFilterEnd, timeFilterStart])
+
+  // 配置文件加载完成后，重算一次
+  useEffect(() => {
+    if (csvConfig) recomputeByFilters()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [csvConfig])
 
   const onDrop = useCallback(
     (e: DragEvent<HTMLElement>) => {
@@ -274,7 +300,7 @@ export default function App() {
               checked={timeFilterEnabled}
               onChange={(e) => {
                 setTimeFilterEnabled(e.target.checked)
-                window.setTimeout(recomputeByTimeFilter, 0)
+                window.setTimeout(recomputeByFilters, 0)
               }}
             />
             <span>启用事件时间筛选</span>
@@ -288,7 +314,7 @@ export default function App() {
               value={timeFilterStart}
               onChange={(e) => {
                 setTimeFilterStart(e.target.value)
-                window.setTimeout(recomputeByTimeFilter, 0)
+                window.setTimeout(recomputeByFilters, 0)
               }}
               disabled={!timeFilterEnabled}
             />
@@ -302,7 +328,7 @@ export default function App() {
               value={timeFilterEnd}
               onChange={(e) => {
                 setTimeFilterEnd(e.target.value)
-                window.setTimeout(recomputeByTimeFilter, 0)
+                window.setTimeout(recomputeByFilters, 0)
               }}
               disabled={!timeFilterEnabled}
             />
@@ -349,6 +375,9 @@ export default function App() {
                   列
                   {timeFilterEnabled && item.removedByTimeCount > 0
                     ? ` · 时间筛选删除 ${item.removedByTimeCount} 行`
+                    : ''}
+                  {item.removedByCustomCount > 0
+                    ? ` · 自定义剔除 ${item.removedByCustomCount} 行`
                     : ''}
                 </div>
               </div>

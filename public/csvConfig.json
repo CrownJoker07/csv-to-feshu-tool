@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "_comment": "修改本文件后刷新页面即可生效（无需在网页里配UI）",
+  "_comment2": "column 支持：列名(与CSV表头一致) / 数字(第N列，从1开始) / \"*\"(任意列)",
+  "_comment3": "matchType=regex：pattern+flags；matchType=keywords：keywords；contains 默认 true；caseInsensitive 默认 false",
+
+  "eventTimeColumnNames": ["事件时间"],
+
+  "removeEmptyRows": true,
+  "removeDuplicateHeaderRows": true,
+  "removeFooterKeywordRows": true,
+  "footerKeywords": ["合计", "总计", "汇总", "说明", "注释", "数据来源", "更新时间"],
+
+  "removeRules": [
+    {
+      "name": "示例_剔除payment_id为空的行",
+      "enabled": false,
+      "column": "payment_id",
+      "matchType": "regex",
+      "pattern": "^$",
+      "flags": ""
+    },
+    {
+      "name": "示例_剔除任意列包含debug字样的行",
+      "enabled": false,
+      "column": "*",
+      "matchType": "keywords",
+      "keywords": ["debug", "DEBUG"],
+      "contains": true,
+      "caseInsensitive": true
+    },
+    {
+      "name": "剔除触发用户数为0的行",
+      "enabled": true,
+      "column": "ta_app_install.触发用户数",
+      "matchType": "regex",
+      "pattern": "^0$",
+      "flags": ""
+    }
+  ]
+}
+
+

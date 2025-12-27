@@ -71,3 +71,74 @@ export default defineConfig([
   },
 ])
 ```
+
+---
+
+## CSV to 飞书表格（TSV）工具说明（本项目）
+
+### 使用方式
+- 拖拽多个 `.csv` 到页面（或点击选择）。
+- 工具会自动清洗（剔除不需要的行），并为每个文件提供“复制TSV”按钮。
+- 页面上支持“事件时间”筛选（启用后：**仅保留筛选范围内**，范围外进入“被删除内容”）。
+
+### 自定义剔除规则（无 UI，使用 csvConfig.json）
+你不需要在页面里配规则，直接修改 [`public/csvConfig.json`](public/csvConfig.json) 然后刷新页面即可生效。
+
+#### 1) 配置文件位置
+- 配置文件：`public/csvConfig.json`
+- 修改后：刷新浏览器即可
+
+#### 2) `removeRules` 规则字段（最常用）
+`removeRules` 是一个数组；**任意规则命中，该行就会进入“被删除内容”**。
+
+- `name`：规则名（必填）
+- `enabled`：是否启用（可选，默认 true）
+- `column`：列定位（必填）
+  - 列名（string，必须与 CSV 表头一致）
+  - 数字（number，第 N 列，从 1 开始）
+  - `"*"`（任意列：整行任意单元格命中则剔除）
+- `matchType`：匹配类型（必填）
+  - `"regex"`：正则匹配（JS RegExp 语法）
+  - `"keywords"`：关键词匹配
+- 当 `matchType="regex"`：
+  - `pattern`：正则表达式字符串（必填）
+  - `flags`：正则 flags（可选，例如 `"i"`）
+- 当 `matchType="keywords"`：
+  - `keywords`：关键词数组（必填）
+  - `contains`：关键词匹配方式（可选，默认 true）
+    - `true`：包含匹配（`cell.includes(keyword)`）
+    - `false`：整格匹配（`cell === keyword`）
+  - `caseInsensitive`：忽略大小写（可选，默认 false）
+
+#### 3) 内置清洗规则开关（可选）
+- `removeEmptyRows`：是否删除空行（默认 true）
+- `removeDuplicateHeaderRows`：是否删除重复表头（默认 true）
+- `removeFooterKeywordRows`：是否删除表尾说明/合计行（默认 true）
+- `footerKeywords`：表尾关键词列表（默认：合计/总计/汇总/说明/注释/数据来源/更新时间）
+
+#### 4) 示例：删掉某列为 0 的行
+
+```json
+{
+  "name": "剔除总次数为0的行",
+  "enabled": true,
+  "column": "payment_success.总次数",
+  "matchType": "regex",
+  "pattern": "^0$",
+  "flags": ""
+}
+```
+
+#### 5) 示例：删掉任意列包含“debug”的行
+
+```json
+{
+  "name": "剔除debug行",
+  "enabled": true,
+  "column": "*",
+  "matchType": "keywords",
+  "keywords": ["debug"],
+  "contains": true,
+  "caseInsensitive": true
+}
+```
