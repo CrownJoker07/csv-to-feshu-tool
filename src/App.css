@@ -193,6 +193,24 @@
   color: #b42318;
 }
 
+.tableHeader {
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #111;
+  font-size: 12px;
+  line-height: 1.35;
+  overflow: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: pre;
+  tab-size: 4;
+  font-variant-ligatures: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+}
+
 .preview {
   margin-top: 10px;
   padding: 10px;
@@ -204,6 +222,11 @@
   max-height: 180px;
   font-size: 12px;
   line-height: 1.35;
+  white-space: pre;
+  tab-size: 4;
+  font-variant-ligatures: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -221,6 +244,12 @@
     background: #0b1220;
     border: 1px solid #1f2937;
     color: #e5e7eb;
+  }
+
+  .tableHeader {
+    background: #111827;
+    border: 1px solid #1f2937;
+    color: #f9fafb;
   }
 
   .btn {

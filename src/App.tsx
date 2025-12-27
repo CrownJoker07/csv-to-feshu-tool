@@ -267,13 +267,25 @@ export default function App() {
               {!item.error && rowCount > 0 ? (
                 <>
                   <div className="sectionTitle">剔除后内容</div>
-                  <pre className="preview">{rowsToTsv(item.cleanedRows)}</pre>
+                  {item.cleanedRows.length > 0 ? (
+                    <div className="tableHeader">
+                      {rowsToTsv([item.cleanedRows[0]])}
+                    </div>
+                  ) : null}
+                  <pre className="preview">
+                    {rowsToTsv(item.cleanedRows.slice(1))}
+                  </pre>
 
                   {item.removedRows.length > 0 ? (
                     <>
                       <div className="sectionTitle danger">
                         被删除内容（{item.removedRows.length} 行）
                       </div>
+                      {item.cleanedRows.length > 0 ? (
+                        <div className="tableHeader">
+                          {rowsToTsv([item.cleanedRows[0]])}
+                        </div>
+                      ) : null}
                       <pre className="preview removedPreview">
                         {rowsToTsv(item.removedRows)}
                       </pre>
