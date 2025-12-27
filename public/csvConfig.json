@@ -36,6 +36,62 @@
       "matchType": "regex",
       "pattern": "^0$",
       "flags": ""
+    },
+    {
+      "name": "剔除payment_fail.总次数为0的行",
+      "enabled": true,
+      "column": "payment_fail.总次数",
+      "matchType": "regex",
+      "pattern": "^0$",
+      "flags": ""
+    },
+    {
+      "name": "剔除idol_user_guide_task.触发用户数的行",
+      "enabled": true,
+      "column": "idol_user_guide_task.触发用户数",
+      "matchType": "regex",
+      "pattern": "^0$",
+      "flags": ""
+    },
+    {
+      "name": "剔除payment_success.总次数为0的行",
+      "enabled": true,
+      "column": "payment_success.总次数",
+      "matchType": "regex",
+      "pattern": "^0$",
+      "flags": ""
+    },
+    {
+      "name": "剔除ta_app_start.触发用户数为0的行",
+      "enabled": true,
+      "column": "ta_app_start.触发用户数",
+      "matchType": "regex",
+      "pattern": "^0$",
+      "flags": ""
+    },
+    {
+      "name": "剔除idol_user_main_task.触发用户数为0的行",
+      "enabled": true,
+      "column": "idol_user_main_task.触发用户数",
+      "matchType": "regex",
+      "pattern": "^0$",
+      "flags": ""
+    },
+    {
+      "name": "剔除idol_ui_duration.总次数为0的行",
+      "enabled": true,
+      "column": "idol_ui_duration.总次数",
+      "matchType": "regex",
+      "pattern": "^0$",
+      "flags": ""
+    },
+    {
+      "name": "剔除idol_error_log.总次数为0的行",
+      "enabled": true,
+      "column": "idol_error_log.总次数",
+      "matchType": "regex",
+      "pattern": "^0$",
+      "flags": ""
     }
   ]
 }
