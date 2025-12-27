@@ -7,6 +7,7 @@ export type CsvCleanResult = {
   removedRowCount: number
   rows: string[][]
   removedRows: string[][]
+  removedByTimeRows: string[][]
 }
 
 const DEFAULT_FOOTER_KEYWORDS = [
@@ -61,6 +62,59 @@ function normalizeOutputRow(row: string[]): string[] {
   return row.map(trimCell)
 }
 
+export type EventTimeFilterMode = 'excludeMatch' | 'includeMatch'
+
+export type EventTimeFilter = {
+  enabled: boolean
+  startDate?: string // yyyy-mm-dd
+  endDate?: string // yyyy-mm-dd
+  mode: EventTimeFilterMode
+}
+
+export type CleanCsvOptions = {
+  eventTimeFilter?: EventTimeFilter
+}
+
+function findEventTimeColIndex(headerRow: string[]): number {
+  return headerRow.findIndex((c) => trimCell(c) === '事件时间')
+}
+
+function dateToStartMs(dateStr: string): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr)
+  if (!m) return null
+  const y = Number(m[1])
+  const mo = Number(m[2])
+  const d = Number(m[3])
+  const dt = new Date(y, mo - 1, d, 0, 0, 0, 0)
+  const t = dt.getTime()
+  return Number.isFinite(t) ? t : null
+}
+
+function dateToEndMs(dateStr: string): number | null {
+  const start = dateToStartMs(dateStr)
+  if (start === null) return null
+  return start + 24 * 60 * 60 * 1000 - 1
+}
+
+function parseEventTimeMs(cell: string): number | null {
+  const s = trimCell(cell)
+  if (!s) return null
+  const normalized = s.includes(' ') && !s.includes('T') ? s.replace(' ', 'T') : s
+  const t = Date.parse(normalized)
+  return Number.isFinite(t) ? t : null
+}
+
+function matchTimeRange(
+  eventTimeMs: number | null,
+  startMs: number | null,
+  endMs: number | null,
+): boolean {
+  if (eventTimeMs === null) return false
+  if (startMs !== null && eventTimeMs < startMs) return false
+  if (endMs !== null && eventTimeMs > endMs) return false
+  return true
+}
+
 export function rowsToTsv(rows: string[][]): string {
   return rows
     .map((row) =>
@@ -95,7 +149,10 @@ export function parseCsvFile(file: File): Promise<string[][]> {
   })
 }
 
-export function cleanCsvRows(rawRows: string[][]): CsvCleanResult {
+export function cleanCsvRows(
+  rawRows: string[][],
+  options: CleanCsvOptions = {},
+): CsvCleanResult {
   const originalRowCount = rawRows.length
 
   const maxLen = rawRows.reduce((m, r) => Math.max(m, r.length), 0)
@@ -116,6 +173,7 @@ export function cleanCsvRows(rawRows: string[][]): CsvCleanResult {
       removedRowCount: originalRowCount,
       rows: [],
       removedRows: [],
+      removedByTimeRows: [],
     }
   }
 
@@ -123,36 +181,69 @@ export function cleanCsvRows(rawRows: string[][]): CsvCleanResult {
   const tableLen = Math.max(header.length, maxLen)
   const headerNorm = padRow(header, tableLen).map(trimCell)
 
-  const cleaned: string[][] = []
-  const removedRows: string[][] = []
+  const cleanedBase: string[][] = []
+  const removedByRulesRows: string[][] = []
   for (let i = 0; i < rawRows.length; i += 1) {
     const row = rawRows[i]
     if (rowIsEmpty(row)) continue
 
     // 表头行：保留（即使它命中关键词）
     if (i === headerIndex) {
-      cleaned.push(normalizeOutputRow(padRow(row, tableLen)))
+      cleanedBase.push(normalizeOutputRow(padRow(row, tableLen)))
       continue
     }
 
     // 重复表头：删除（以 headerLen 为基准对齐）
     const rowPadded = padRow(row, tableLen)
     if (sameRow(rowPadded, headerNorm)) {
-      removedRows.push(normalizeOutputRow(rowPadded))
+      removedByRulesRows.push(normalizeOutputRow(rowPadded))
       continue
     }
 
     // 表尾说明/合计：删除
     if (hitFooterKeywords(rowPadded)) {
-      removedRows.push(normalizeOutputRow(rowPadded))
+      removedByRulesRows.push(normalizeOutputRow(rowPadded))
       continue
     }
 
-    cleaned.push(normalizeOutputRow(rowPadded))
+    cleanedBase.push(normalizeOutputRow(rowPadded))
+  }
+
+  // 时间筛选：按列名“事件时间”
+  const tf = options.eventTimeFilter
+  const removedByTimeRows: string[][] = []
+  let cleaned = cleanedBase
+
+  if (tf?.enabled && cleanedBase.length > 1) {
+    const headerRow = cleanedBase[0]
+    const eventTimeIdx = findEventTimeColIndex(headerRow)
+    if (eventTimeIdx >= 0) {
+      const mode: EventTimeFilterMode = tf.mode ?? 'includeMatch'
+      const startMs = tf.startDate ? dateToStartMs(tf.startDate) : null
+      const endMs = tf.endDate ? dateToEndMs(tf.endDate) : null
+
+      const keptData: string[][] = []
+      for (const row of cleanedBase.slice(1)) {
+        const tMs = parseEventTimeMs(row[eventTimeIdx] ?? '')
+        const match = matchTimeRange(tMs, startMs, endMs)
+        const shouldRemove =
+          mode === 'excludeMatch'
+            ? match
+            : mode === 'includeMatch'
+              ? !match
+              : false
+
+        if (shouldRemove) removedByTimeRows.push(row)
+        else keptData.push(row)
+      }
+
+      cleaned = [cleanedBase[0], ...keptData]
+    }
   }
 
   const cleanedRowCount = cleaned.length
   const removedRowCount = Math.max(0, originalRowCount - cleanedRowCount)
+  const removedRows = [...removedByRulesRows, ...removedByTimeRows]
 
   return {
     headerIndex,
@@ -161,6 +252,7 @@ export function cleanCsvRows(rawRows: string[][]): CsvCleanResult {
     removedRowCount,
     rows: cleaned,
     removedRows,
+    removedByTimeRows,
   }
 }
 

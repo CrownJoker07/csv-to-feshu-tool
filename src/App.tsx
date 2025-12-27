@@ -1,7 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
 import './App.css'
-import { cleanCsvRows, parseCsvFile, rowsToTsv } from './utils/csv'
+import {
+  cleanCsvRows,
+  parseCsvFile,
+  rowsToTsv,
+} from './utils/csv'
 
 type ParsedItem = {
   id: string
@@ -9,6 +13,7 @@ type ParsedItem = {
   rawRows: string[][]
   cleanedRows: string[][]
   removedRows: string[][]
+  removedByTimeCount: number
   originalRowCount: number
   removedRowCount: number
   error?: string
@@ -53,6 +58,9 @@ export default function App() {
   const [items, setItems] = useState<ParsedItem[]>([])
   const [isParsing, setIsParsing] = useState(false)
   const [globalMsg, setGlobalMsg] = useState<string | null>(null)
+  const [timeFilterEnabled, setTimeFilterEnabled] = useState(false)
+  const [timeFilterStart, setTimeFilterStart] = useState('')
+  const [timeFilterEnd, setTimeFilterEnd] = useState('')
 
   const stats = useMemo(() => {
     const ok = items.filter((x) => !x.error).length
@@ -90,13 +98,21 @@ export default function App() {
 
             try {
               const rawRows = await parseCsvFile(file)
-              const cleaned = cleanCsvRows(rawRows)
+              const cleaned = cleanCsvRows(rawRows, {
+                eventTimeFilter: {
+                  enabled: timeFilterEnabled,
+                  startDate: timeFilterStart || undefined,
+                  endDate: timeFilterEnd || undefined,
+                  mode: 'includeMatch',
+                },
+              })
               return {
                 id,
                 file,
                 rawRows,
                 cleanedRows: cleaned.rows,
                 removedRows: cleaned.removedRows,
+                removedByTimeCount: cleaned.removedByTimeRows.length,
                 originalRowCount: cleaned.originalRowCount,
                 removedRowCount: cleaned.removedRowCount,
               } satisfies ParsedItem
@@ -108,6 +124,7 @@ export default function App() {
                 rawRows: [],
                 cleanedRows: [],
                 removedRows: [],
+                removedByTimeCount: 0,
                 originalRowCount: 0,
                 removedRowCount: 0,
                 error: msg,
@@ -125,8 +142,33 @@ export default function App() {
         setIsParsing(parsingCountRef.current > 0)
       }
     },
-    [],
+    [timeFilterEnabled, timeFilterEnd, timeFilterStart],
   )
+
+  // 时间筛选变化时：基于 rawRows 重新计算剔除结果（不需要重新解析文件）
+  const recomputeByTimeFilter = useCallback(() => {
+    setItems((prev) =>
+      prev.map((it) => {
+        if (it.error) return it
+        const cleaned = cleanCsvRows(it.rawRows, {
+          eventTimeFilter: {
+            enabled: timeFilterEnabled,
+            startDate: timeFilterStart || undefined,
+            endDate: timeFilterEnd || undefined,
+            mode: 'includeMatch',
+          },
+        })
+        return {
+          ...it,
+          cleanedRows: cleaned.rows,
+          removedRows: cleaned.removedRows,
+          removedByTimeCount: cleaned.removedByTimeRows.length,
+          originalRowCount: cleaned.originalRowCount,
+          removedRowCount: cleaned.removedRowCount,
+        }
+      }),
+    )
+  }, [timeFilterEnabled, timeFilterEnd, timeFilterStart])
 
   const onDrop = useCallback(
     (e: DragEvent<HTMLElement>) => {
@@ -224,6 +266,54 @@ export default function App() {
         </div>
       </section>
 
+      <section className="filters">
+        <div className="filtersRow">
+          <label className="chk">
+            <input
+              type="checkbox"
+              checked={timeFilterEnabled}
+              onChange={(e) => {
+                setTimeFilterEnabled(e.target.checked)
+                window.setTimeout(recomputeByTimeFilter, 0)
+              }}
+            />
+            <span>启用事件时间筛选</span>
+          </label>
+
+          <label className="field">
+            <span className="fieldLabel">开始</span>
+            <input
+              className="input"
+              type="date"
+              value={timeFilterStart}
+              onChange={(e) => {
+                setTimeFilterStart(e.target.value)
+                window.setTimeout(recomputeByTimeFilter, 0)
+              }}
+              disabled={!timeFilterEnabled}
+            />
+          </label>
+
+          <label className="field">
+            <span className="fieldLabel">结束</span>
+            <input
+              className="input"
+              type="date"
+              value={timeFilterEnd}
+              onChange={(e) => {
+                setTimeFilterEnd(e.target.value)
+                window.setTimeout(recomputeByTimeFilter, 0)
+              }}
+              disabled={!timeFilterEnabled}
+            />
+          </label>
+        </div>
+
+        <div className="filtersHint">
+          按列名“事件时间”筛选；如果某行事件时间无法解析，则默认不命中筛选。
+        </div>
+      </section>
+
       {globalMsg ? <div className="toast">{globalMsg}</div> : null}
 
       <section className="list">
@@ -257,6 +347,9 @@ export default function App() {
                   {formatBytes(item.file.size)} · 原始 {item.originalRowCount} 行 ·
                   删除 {item.removedRowCount} 行 · 保留 {rowCount} 行 · {colCount}{' '}
                   列
+                  {timeFilterEnabled && item.removedByTimeCount > 0
+                    ? ` · 时间筛选删除 ${item.removedByTimeCount} 行`
+                    : ''}
                 </div>
               </div>
 
