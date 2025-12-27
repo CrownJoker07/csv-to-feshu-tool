@@ -46,6 +46,9 @@ function formatBytes(bytes: number): string {
 
 export default function App() {
   const inputRef = useRef<HTMLInputElement | null>(null)
+  // 用于“取消/忽略”正在进行的解析：清空列表时递增版本号，旧版本解析结束后不再写入 items
+  const parseSeqRef = useRef(0)
+  const parsingCountRef = useRef(0)
   const [items, setItems] = useState<ParsedItem[]>([])
   const [isParsing, setIsParsing] = useState(false)
   const [globalMsg, setGlobalMsg] = useState<string | null>(null)
@@ -58,6 +61,10 @@ export default function App() {
 
   const addFiles = useCallback(
     async (fileList: FileList | File[]) => {
+      const mySeq = (parseSeqRef.current += 1)
+      parsingCountRef.current += 1
+      setIsParsing(true)
+
       const files = Array.from(fileList).filter((f) => {
         const nameOk = f.name.toLowerCase().endsWith('.csv')
         const typeOk = (f.type || '').toLowerCase().includes('csv')
@@ -66,11 +73,12 @@ export default function App() {
 
       if (files.length === 0) {
         setGlobalMsg('未检测到 CSV 文件（请拖入 .csv）')
+        parsingCountRef.current = Math.max(0, parsingCountRef.current - 1)
+        setIsParsing(parsingCountRef.current > 0)
         return
       }
 
       setGlobalMsg(null)
-      setIsParsing(true)
       try {
         const parsed = await Promise.all(
           files.map(async (file) => {
@@ -105,9 +113,13 @@ export default function App() {
           }),
         )
 
-        setItems((prev) => [...prev, ...parsed])
+        // 如果期间用户点了“清空列表”（或触发了新的解析批次），忽略本次结果
+        if (mySeq === parseSeqRef.current) {
+          setItems((prev) => [...prev, ...parsed])
+        }
       } finally {
-        setIsParsing(false)
+        parsingCountRef.current = Math.max(0, parsingCountRef.current - 1)
+        setIsParsing(parsingCountRef.current > 0)
       }
     },
     [],
@@ -156,10 +168,6 @@ export default function App() {
     [items],
   )
 
-  const onRemove = useCallback((id: string) => {
-    setItems((prev) => prev.filter((x) => x.id !== id))
-  }, [])
-
   return (
     <div className="page">
       <header className="header">
@@ -173,7 +181,12 @@ export default function App() {
         <div className="headerRight">
           <button
             className="btn"
-            onClick={() => setItems([])}
+            onClick={() => {
+              // 让正在解析的批次结果失效（避免解析结束又把列表加回来）
+              parseSeqRef.current += 1
+              setItems([])
+              setGlobalMsg(null)
+            }}
             disabled={items.length === 0}
           >
             清空列表
