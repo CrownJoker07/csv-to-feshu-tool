@@ -6,6 +6,7 @@ export type CsvCleanResult = {
   cleanedRowCount: number
   removedRowCount: number
   rows: string[][]
+  removedRows: string[][]
 }
 
 const DEFAULT_FOOTER_KEYWORDS = [
@@ -114,6 +115,7 @@ export function cleanCsvRows(rawRows: string[][]): CsvCleanResult {
       cleanedRowCount: 0,
       removedRowCount: originalRowCount,
       rows: [],
+      removedRows: [],
     }
   }
 
@@ -122,6 +124,7 @@ export function cleanCsvRows(rawRows: string[][]): CsvCleanResult {
   const headerNorm = padRow(header, tableLen).map(trimCell)
 
   const cleaned: string[][] = []
+  const removedRows: string[][] = []
   for (let i = 0; i < rawRows.length; i += 1) {
     const row = rawRows[i]
     if (rowIsEmpty(row)) continue
@@ -134,10 +137,16 @@ export function cleanCsvRows(rawRows: string[][]): CsvCleanResult {
 
     // 重复表头：删除（以 headerLen 为基准对齐）
     const rowPadded = padRow(row, tableLen)
-    if (sameRow(rowPadded, headerNorm)) continue
+    if (sameRow(rowPadded, headerNorm)) {
+      removedRows.push(normalizeOutputRow(rowPadded))
+      continue
+    }
 
     // 表尾说明/合计：删除
-    if (hitFooterKeywords(rowPadded)) continue
+    if (hitFooterKeywords(rowPadded)) {
+      removedRows.push(normalizeOutputRow(rowPadded))
+      continue
+    }
 
     cleaned.push(normalizeOutputRow(rowPadded))
   }
@@ -151,6 +160,7 @@ export function cleanCsvRows(rawRows: string[][]): CsvCleanResult {
     cleanedRowCount,
     removedRowCount,
     rows: cleaned,
+    removedRows,
   }
 }
 

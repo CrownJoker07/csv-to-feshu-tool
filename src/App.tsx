@@ -8,6 +8,7 @@ type ParsedItem = {
   file: File
   rawRows: string[][]
   cleanedRows: string[][]
+  removedRows: string[][]
   originalRowCount: number
   removedRowCount: number
   error?: string
@@ -95,6 +96,7 @@ export default function App() {
                 file,
                 rawRows,
                 cleanedRows: cleaned.rows,
+                removedRows: cleaned.removedRows,
                 originalRowCount: cleaned.originalRowCount,
                 removedRowCount: cleaned.removedRowCount,
               } satisfies ParsedItem
@@ -105,6 +107,7 @@ export default function App() {
                 file,
                 rawRows: [],
                 cleanedRows: [],
+                removedRows: [],
                 originalRowCount: 0,
                 removedRowCount: 0,
                 error: msg,
@@ -262,9 +265,21 @@ export default function App() {
               ) : null}
 
               {!item.error && rowCount > 0 ? (
-                <pre className="preview">
-                  {rowsToTsv(item.cleanedRows)}
-                </pre>
+                <>
+                  <div className="sectionTitle">剔除后内容</div>
+                  <pre className="preview">{rowsToTsv(item.cleanedRows)}</pre>
+
+                  {item.removedRows.length > 0 ? (
+                    <>
+                      <div className="sectionTitle danger">
+                        被删除内容（{item.removedRows.length} 行）
+                      </div>
+                      <pre className="preview removedPreview">
+                        {rowsToTsv(item.removedRows)}
+                      </pre>
+                    </>
+                  ) : null}
+                </>
               ) : null}
             </div>
           )
