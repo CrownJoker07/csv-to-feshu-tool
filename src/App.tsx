@@ -227,7 +227,8 @@ export default function App() {
       const item = items.find((x) => x.id === id)
       if (!item || item.error) return
 
-      const tsv = rowsToTsv(item.cleanedRows)
+      // 只复制数据行（不包含表头）。表头已在 UI 中单独展示。
+      const tsv = rowsToTsv(item.cleanedRows.slice(1))
       try {
         await copyText(tsv)
         const noticeAt = Date.now()
@@ -237,7 +238,7 @@ export default function App() {
               ? {
                   ...x,
                   copiedAt: noticeAt,
-                  noticeText: '已复制',
+                  noticeText: '已复制（不含表头）',
                   noticeKind: 'success',
                   noticeAt,
                 }
