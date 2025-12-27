@@ -76,6 +76,26 @@ export default defineConfig([
 
 ## CSV to 飞书表格（TSV）工具说明（本项目）
 
+### 打包与运行（Windows 友好）
+本项目读取 `public/csvConfig.json` 使用的是 `fetch('/csvConfig.json')`，因此**不能通过双击 `dist/index.html`（file://）直接运行**，需要用静态服务器启动。
+
+#### 1) 生成打包产物（dist）
+- pnpm：`pnpm build`
+- npm：`npm run build`
+
+打包后输出在 `dist/`。
+
+#### 2) 运行打包后的 dist（推荐）
+使用 Vite 自带的预览服务器（不会触发剪贴板复制）：
+- pnpm：`pnpm preview`
+- npm：`npm run preview`
+
+#### 3) 如果你用 `npx serve dist`，需要关闭“复制到剪贴板”
+在部分环境里（例如远程桌面、剪贴板被占用等），`serve` 会尝试复制地址到剪贴板，可能导致 `clipboardy` 报错退出。
+
+可用下面命令避免该问题：
+- `npx --yes serve dist -l 4173 --no-clipboard`
+
 ### 使用方式
 - 拖拽多个 `.csv` 到页面（或点击选择）。
 - 工具会自动清洗（剔除不需要的行），并为每个文件提供“复制TSV”按钮。
