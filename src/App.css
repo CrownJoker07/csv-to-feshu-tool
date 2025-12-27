@@ -1,42 +1,144 @@
-#root {
-  max-width: 1280px;
+.page {
+  max-width: 980px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 24px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    'Noto Sans', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.2;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.subTitle {
+  margin-top: 6px;
+  color: #666;
+  font-size: 13px;
+}
+
+.headerRight {
+  display: flex;
+  gap: 8px;
+}
+
+.dropZone {
+  border: 2px dashed #bbb;
+  border-radius: 12px;
+  padding: 22px;
+  cursor: pointer;
+  background: #fafafa;
+  user-select: none;
+}
+
+.dropZone.isParsing {
+  opacity: 0.75;
+}
+
+.dropTitle {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dropHint {
+  margin-top: 6px;
+  color: #666;
+  font-size: 12px;
+}
+
+.toast {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #111;
+  color: #fff;
+  font-size: 13px;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 14px;
 }
 
 .card {
-  padding: 2em;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
 }
 
-.read-the-docs {
-  color: #888;
+.cardTop {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardTitle {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardMeta {
+  color: #666;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.cardActions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.btn {
+  border: 1px solid #ddd;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn.primary {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.error {
+  margin-top: 10px;
+  color: #b42318;
+  font-size: 13px;
+}
+
+.preview {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f6f6f6;
+  overflow: auto;
+  max-height: 180px;
+  font-size: 12px;
+  line-height: 1.35;
 }
