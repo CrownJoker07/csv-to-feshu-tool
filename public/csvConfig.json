@@ -92,6 +92,14 @@
       "matchType": "regex",
       "pattern": "^0$",
       "flags": ""
+    },
+    {
+      "name": "剔除appLovin_sdk_ad_revenue.总次数为0的行",
+      "enabled": true,
+      "column": "appLovin_sdk_ad_revenue.总次数",
+      "matchType": "regex",
+      "pattern": "^0$",
+      "flags": ""
     }
   ]
 }
