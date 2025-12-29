@@ -80,9 +80,29 @@ export type CleanCsvOptions = {
 }
 
 function findEventTimeColIndex(headerRow: string[], names: readonly string[]): number {
-  const set = new Set(names.map((x) => trimCell(x)).filter(Boolean))
-  if (set.size === 0) set.add('事件时间')
-  return headerRow.findIndex((c) => set.has(trimCell(c)))
+  const normalizedNames = names.map((x) => trimCell(x)).filter(Boolean)
+  if (normalizedNames.length === 0) normalizedNames.push('事件时间')
+
+  for (const name of normalizedNames) {
+    // 1) 尝试作为列号（从 1 开始）
+    if (/^\d+$/.test(name)) {
+      const idx = parseInt(name, 10) - 1
+      if (idx >= 0 && idx < headerRow.length) return idx
+    }
+
+    // 2) 精确匹配
+    const exactIdx = headerRow.findIndex((c) => trimCell(c) === name)
+    if (exactIdx >= 0) return exactIdx
+
+    // 3) 包含匹配
+    const fuzzyIdx = headerRow.findIndex((c) => {
+      const cell = trimCell(c)
+      return cell.includes(name) || name.includes(cell)
+    })
+    if (fuzzyIdx >= 0) return fuzzyIdx
+  }
+
+  return -1
 }
 
 function dateToStartMs(dateStr: string): number | null {
@@ -102,9 +122,30 @@ function dateToEndMs(dateStr: string): number | null {
   return start + 24 * 60 * 60 * 1000 - 1
 }
 
+/**
+ * 尽量以本地时间解析日期字符串，避免 ISO 8601 (YYYY-MM-DD) 被默认解析为 UTC
+ */
 function parseEventTimeMs(cell: string): number | null {
   const s = trimCell(cell)
   if (!s) return null
+
+  // 1) 尝试解析 YYYY-MM-DD 或 YYYY/MM/DD 等格式，强制作为本地时间
+  // 匹配常见的日期开头：2025-12-27 或 2025/12/27
+  const m = /^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/.exec(s)
+  if (m) {
+    const y = Number(m[1])
+    const mo = Number(m[2])
+    const d = Number(m[3])
+    const h = m[4] ? Number(m[4]) : 0
+    const mi = m[5] ? Number(m[5]) : 0
+    const se = m[6] ? Number(m[6]) : 0
+    const dt = new Date(y, mo - 1, d, h, mi, se, 0)
+    const t = dt.getTime()
+    if (Number.isFinite(t)) return t
+  }
+
+  // 2) 兜底：使用 Date.parse
+  // 针对 "2025-12-27 10:00:00" 这种中间是空格的，替换成 T 以便 Date.parse 识别
   const normalized = s.includes(' ') && !s.includes('T') ? s.replace(' ', 'T') : s
   const t = Date.parse(normalized)
   return Number.isFinite(t) ? t : null

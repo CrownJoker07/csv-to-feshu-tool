@@ -214,11 +214,10 @@ export default function App() {
     )
   }, [csvConfig, timeFilterEnabled, timeFilterEnd, timeFilterStart])
 
-  // 配置文件加载完成后，重算一次
+  // 配置文件或筛选条件变化时，重算一次
   useEffect(() => {
-    if (csvConfig) recomputeByFilters()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [csvConfig])
+    recomputeByFilters()
+  }, [recomputeByFilters])
 
   const onDrop = useCallback(
     (e: DragEvent<HTMLElement>) => {
@@ -365,7 +364,6 @@ export default function App() {
               checked={timeFilterEnabled}
               onChange={(e) => {
                 setTimeFilterEnabled(e.target.checked)
-                window.setTimeout(recomputeByFilters, 0)
               }}
             />
             <span>启用事件时间筛选</span>
@@ -379,7 +377,6 @@ export default function App() {
               value={timeFilterStart}
               onChange={(e) => {
                 setTimeFilterStart(e.target.value)
-                window.setTimeout(recomputeByFilters, 0)
               }}
               disabled={!timeFilterEnabled}
             />
@@ -393,7 +390,6 @@ export default function App() {
               value={timeFilterEnd}
               onChange={(e) => {
                 setTimeFilterEnd(e.target.value)
-                window.setTimeout(recomputeByFilters, 0)
               }}
               disabled={!timeFilterEnabled}
             />
