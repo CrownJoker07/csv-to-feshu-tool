@@ -78,9 +78,9 @@
       "flags": ""
     },
     {
-      "name": "剔除idol_ui_duration.总次数为0的行",
+      "name": "剔除idol_ui_duration.duration总和为0的行",
       "enabled": true,
-      "column": "idol_ui_duration.总次数",
+      "column": "idol_ui_duration.duration总和",
       "matchType": "regex",
       "pattern": "^0$",
       "flags": ""
