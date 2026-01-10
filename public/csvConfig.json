@@ -54,6 +54,14 @@
       "flags": ""
     },
     {
+      "name": "剔除payment_success.payment_price_usd总和为0的行",
+      "enabled": true,
+      "column": "payment_success.payment_price_usd总和",
+      "matchType": "regex",
+      "pattern": "^0$",
+      "flags": ""
+    },
+    {
       "name": "剔除payment_success.总次数为0的行",
       "enabled": true,
       "column": "payment_success.总次数",
